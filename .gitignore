@@ -1,0 +1,22 @@
+# OS
+.DS_Store
+
+# Python
+__pycache__/
+*.pyc
+.venv/
+
+# Kubernetes
+*.log
+
+# IDE
+.vscode/
+
+# Secrets
+.env
+*.pem
+*.key
+
+# Terraform
+.terraform/
+terraform.tfstate*
