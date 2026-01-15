@@ -16,6 +16,7 @@ This demo uses a simple flask web app
 
 ```
 kubectl run -i --tty --image busybox:1.28 dns-test --restart=Never --rm
+kubectl exec -it dns-test -- sh
 nslookup flask-normal
 nslookup flask-headless
 

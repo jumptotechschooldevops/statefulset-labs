@@ -4,19 +4,18 @@ metadata:
   name: todo
 spec:
   type: NodePort
-  ports:
-    - port: 5000
-      targetPort: 5000
-      nodePort: 31000
   selector:
     app: todo
+  ports:
+    - name: http
+      port: 5000
+      targetPort: 5000
+      nodePort: 31000
 ---
 apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: todo
-  labels:
-    app: todo
 spec:
   replicas: 1
   selector:
@@ -29,13 +28,10 @@ spec:
     spec:
       containers:
         - name: python-todo
-          image: kunchalavikram/python_todo_app:v2
+          image: aisalkyn85/python-todo:v2   
+          imagePullPolicy: Always
           ports:
             - containerPort: 5000
-          imagePullPolicy: IfNotPresent
           env:
-          - name: DATABASE_URI
-            value: 'mysql+pymysql://root:root@mysql-normal.default.svc.cluster.local:3306/todo'
-
-# URI: mysql://user:password@hostname:3306/database
-
+            - name: DATABASE_URI
+              value: "mysql+pymysql://root:root@mysql-normal.default.svc.cluster.local:3306/todo"

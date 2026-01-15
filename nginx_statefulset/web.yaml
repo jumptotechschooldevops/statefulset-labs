@@ -1,4 +1,6 @@
-# https://kubernetes.io/docs/tutorials/stateful-application/basic-stateful-set/
+# -----------------------------
+# HEADLESS SERVICE (StatefulSet)
+# -----------------------------
 apiVersion: v1
 kind: Service
 metadata:
@@ -6,13 +8,16 @@ metadata:
   labels:
     app: nginx
 spec:
-  ports:
-  - port: 80
-    name: web
   clusterIP: None
   selector:
     app: nginx
+  ports:
+  - port: 80
+    name: web
 ---
+# -----------------------------
+# NORMAL CLUSTERIP SERVICE
+# -----------------------------
 apiVersion: v1
 kind: Service
 metadata:
@@ -20,18 +25,21 @@ metadata:
   labels:
     app: nginx
 spec:
+  selector:
+    app: nginx
   ports:
   - port: 80
     name: web
-  selector:
-    app: nginx
----    
+---
+# -----------------------------
+# STATEFULSET
+# -----------------------------
 apiVersion: apps/v1
 kind: StatefulSet
 metadata:
   name: web
 spec:
-  serviceName: "nginx-headless"
+  serviceName: nginx-headless
   replicas: 2
   selector:
     matchLabels:
@@ -41,20 +49,27 @@ spec:
       labels:
         app: nginx
     spec:
-      volumes:
-      - name: shared-volume
-        emptyDir: {}
+      # -----------------------------
+      # INIT CONTAINER
+      # -----------------------------
       initContainers:
-      - name: busybox
-        image: busybox
+      - name: init-html
+        image: busybox:1.36
+        command:
+        - sh
+        - -c
+        - |
+          echo "Hello from StatefulSet pod $HOSTNAME" > /workdir/index.html
         volumeMounts:
         - name: shared-volume
-          mountPath: /nginx-data
-        command: ["/bin/sh", "-c"]
-        args: ["echo Hello from container $HOSTNAME > /nginx-data/index.html"]
+          mountPath: /workdir
+
+      # -----------------------------
+      # MAIN CONTAINER
+      # -----------------------------
       containers:
       - name: nginx
-        image: k8s.gcr.io/nginx-slim:0.8
+        image: nginx:1.25-alpine
         ports:
         - containerPort: 80
           name: web
@@ -63,11 +78,23 @@ spec:
           mountPath: /usr/share/nginx/html
         - name: www
           mountPath: /usr/share/nginx
+
+      # -----------------------------
+      # EMPTYDIR (SHARED WITH INIT)
+      # -----------------------------
+      volumes:
+      - name: shared-volume
+        emptyDir: {}
+
+  # -----------------------------
+  # PER-POD PERSISTENT VOLUME
+  # -----------------------------
   volumeClaimTemplates:
   - metadata:
       name: www
     spec:
-      accessModes: [ "ReadWriteOnce" ]
+      accessModes:
+      - ReadWriteOnce
       resources:
         requests:
           storage: 10Mi
