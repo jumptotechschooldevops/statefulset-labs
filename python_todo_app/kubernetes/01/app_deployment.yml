@@ -29,7 +29,7 @@ spec:
     spec:
       containers:
         - name: python-todo
-          image: kunchalavikram/python_todo_app:v2
+          image: aisalkyn85/python_todo_app:v2
           ports:
             - containerPort: 5000
           imagePullPolicy: Always

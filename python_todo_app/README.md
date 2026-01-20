@@ -114,19 +114,19 @@ To connect to your database:
 
 - Check individual DBs.
 ```
-kubectl run mysql-client --image=mysql:5.7 -i -t --rm --restart=Never --\
+kubectl run mysql-client --image=mysql:8.0 -i -t --rm --restart=Never --\
   mysql -h mysql-primary -uroot -proot todo -e "SELECT * from todo;"
 
-kubectl run mysql-client --image=mysql:5.7 -i -t --rm --restart=Never --\
+kubectl run mysql-client --image=mysql:8.0 -i -t --rm --restart=Never --\
   mysql -h mysql-primary -uroot -proot todo -e "SHOW tables;"
 
-kubectl run mysql-client --image=mysql:5.7 -i -t --rm --restart=Never --\
+kubectl run mysql-client --image=mysql:8.0 -i -t --rm --restart=Never --\
   mysql -h mysql-secondary -uroot -proot todo -e "SHOW tables;"
 
-kubectl run mysql-client --image=mysql:5.7 -i -t --rm --restart=Never --\
+kubectl run mysql-client --image=mysql:8.0 -i -t --rm --restart=Never --\
   mysql -h mysql-secondary-0.mysql-secondary -uroot -proot todo -e "SHOW tables;"
 
-kubectl run mysql-client --image=mysql:5.7 -i -t --rm --restart=Never --\
+kubectl run mysql-client --image=mysql:8.0 -i -t --rm --restart=Never --\
   mysql -h mysql-secondary-0.mysql-secondary -uroot -proot todo -e "SELECT * from todo;"
 
 ```
@@ -136,3 +136,69 @@ kubectl run mysql-client --image=mysql:5.7 -i -t --rm --restart=Never --\
 ```
 docker run -d --name mysql -p 3306:3306 -e MYSQL_ROOT_PASSWORD=root -e MYSQL_DATABASE=todo mysql:latest
 ```
+
+
+
+if todo pod is not working, patch it
+
+kubectl patch deployment todo -p '
+spec:
+  template:
+    spec:
+      containers:
+      - name: python-todo
+        command: ["sh", "-c", "sleep 3600"]
+'
+
+kubectl exec -it todo-5b8bb5db64-8gmjc -- sh
+
+
+You MUST connect to the Service name that exists:
+
+kubectl run mysql-client \
+  --image=mysql:8.0 -it --rm --restart=Never -- \
+  mysql -h mysql-normal -uroot -proot todo -e "SHOW TABLES;"
+
+
+
+
+Use the official MySQL image (this is what you already proved works):
+
+
+kubectl run mysql-client \
+  --image=mysql:8.0 \
+  -it --rm --restart=Never -- \
+  mysql -h mysql-normal -uroot -proot
+
+
+1.Docker (LOCAL, NOT Kubernetes):
+
+docker run -d --name mysql \
+  -p 3306:3306 \
+  -e MYSQL_ROOT_PASSWORD=root \
+  -e MYSQL_DATABASE=todo \
+  mysql:latest
+
+2.docker exec -it mysql mysql -uroot -proot todo
+
+
+commands:
+SHOW DATABASES;
+
+USE todo;
+
+SHOW TABLES;
+
+DESCRIBE todo;
+
+CREATE TABLE todo (
+  id INT NOT NULL AUTO_INCREMENT PRIMARY KEY,
+  title VARCHAR(100),
+  complete BOOLEAN
+);
+
+SHOW TABLES;
+DESCRIBE todo;
+
+INSERT INTO todo (title, complete)
+VALUES ('Kubernetes MySQL init fix', false);
